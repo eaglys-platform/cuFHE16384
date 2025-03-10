@@ -28,11 +28,13 @@
 #include "ntt_1024_twiddle.cuh"
 #include <include/details/math.h>
 #include <include/details/error_gpu.cuh>
+#if 1
+#include <include/cufhe.h>
+#endif
 
 namespace cufhe {
 
-template <uint32_t length = 1024,
-          ConvKind conv_kind = NEGATIVE_CYCLIC_CONVOLUTION>
+template <uint32_t length, ConvKind conv_kind = NEGATIVE_CYCLIC_CONVOLUTION>
 class CuNTTHandler: public CuTwiddle<conv_kind> {
 public:
 
@@ -45,13 +47,13 @@ public:
   inline
   void CreateConstant() {
     CuSafeCall(cudaMemcpyToSymbol(con_twd, this->twd_,
-        sizeof(FFP) * 1024, 0,  cudaMemcpyDeviceToDevice));
+        sizeof(FFP) * length, 0,  cudaMemcpyDeviceToDevice));
     CuSafeCall(cudaMemcpyToSymbol(con_twd_inv, this->twd_inv_,
-        sizeof(FFP) * 1024, 0, cudaMemcpyDeviceToDevice));
+        sizeof(FFP) * length, 0, cudaMemcpyDeviceToDevice));
     CuSafeCall(cudaMemcpyToSymbol(con_twd_sqrt, this->twd_sqrt_,
-        sizeof(FFP) * 1024, 0,  cudaMemcpyDeviceToDevice));
+        sizeof(FFP) * length, 0,  cudaMemcpyDeviceToDevice));
     CuSafeCall(cudaMemcpyToSymbol(con_twd_sqrt_inv, this->twd_sqrt_inv_,
-        sizeof(FFP) * 1024, 0, cudaMemcpyDeviceToDevice));
+        sizeof(FFP) * length, 0, cudaMemcpyDeviceToDevice));
   }
 
   template <typename T>
@@ -60,7 +62,40 @@ public:
            T* in,
            FFP* sh_temp,
            uint32_t leading_thread = 0) const {
-    NTT1024<T>(out, in, sh_temp, this->twd_, this->twd_sqrt_, leading_thread);
+    switch (length) {
+#if 0
+      case 2:
+        NTT2_<T>(out, in, stage, this->twd_, this->twd_sqrt_);
+	return;
+      case 4:
+        NTT4_<T>(out, in, stage, this->twd_, this->twd_sqrt_);
+	return;
+      case 8:
+        NTT8_<T>(out, in, stage, this->twd_, this->twd_sqrt_);
+	return;
+#endif
+      case 4:
+        NTT4_<T>(out, in, this->twd_, this->twd_sqrt_);
+	return;
+      case 8:
+        NTT8_<T>(out, in, this->twd_, this->twd_sqrt_);
+	return;
+#if 0
+      case 1024:
+        NTT1024<T>(out, in, sh_temp, this->twd_, this->twd_sqrt_, leading_thread);
+	return;
+      case 16384:
+        NTT16384<T>(out, in, sh_temp, this->twd_, this->twd_sqrt_, leading_thread);
+	return;
+#endif
+    }
+  }
+
+  template <typename T, uint32_t N_B>
+  __device__ inline
+  void NTT_(FFP* out, T* in, uint32_t stage, int test) const {
+    NTT2X_<T, N_B>
+	    (out, in, length, stage, this->twd_, this->twd_sqrt_, test);
   }
 
   template <typename T>
@@ -82,18 +117,51 @@ public:
               FFP* in,
               FFP* sh_temp,
               uint32_t leading_thread = 0) const {
-    NTTInv1024<T>(out, in, sh_temp, this->twd_inv_, this->twd_sqrt_inv_,
+    switch (length) {
+#if 0
+      case 2:
+    	NTTInv2_<T>(out, in, sh_temp, this->twd_inv_, this->twd_sqrt_inv_,
                   leading_thread);
+	break;
+#endif
+      case 4:
+    	NTTInv4_<T>(out, in, this->twd_inv_, this->twd_sqrt_inv_);
+	break;
+      case 8:
+    	NTTInv8_<T>(out, in, this->twd_inv_, this->twd_sqrt_inv_);
+	break;
+#if 0
+      case 1024:
+    	NTTInv1024<T>(out, in, sh_temp, this->twd_inv_, this->twd_sqrt_inv_,
+                  leading_thread);
+	break;
+      case 16384:
+    	NTTInv16384<T>(out, in, sh_temp, this->twd_inv_, this->twd_sqrt_inv_,
+                  leading_thread);
+	break;
+#endif
+    }
   }
 
+  template <typename T, uint32_t N_B>
+  __device__ inline
+  void NTTInv_(T* out, FFP* in, uint32_t stage, int test) const {
+    NTTInv2X_<T, N_B>
+	    (out, in, length, stage, this->twd_inv_, this->twd_sqrt_inv_, test);
+  }
+
+#if 1
+  template <typename T = Torus>
+#else
   template <typename T>
+#endif
   __device__ inline
   void NTTInvAdd(T* out,
                  FFP* in,
                  FFP* sh_temp,
                  uint32_t leading_thread = 0) const {
-    NTTInv1024Add<T>(out, in, sh_temp, this->twd_inv_, this->twd_sqrt_inv_,
-                     leading_thread);
+    	NTTInv1024Add<T>(out, in, sh_temp, this->twd_inv_, this->twd_sqrt_inv_,
+                     	leading_thread);
   }
 
 private:

@@ -23,6 +23,9 @@
 #pragma once
 
 #include <stdint.h>
+#if 1
+#include <stdio.h>
+#endif
 
 namespace cufhe {
 

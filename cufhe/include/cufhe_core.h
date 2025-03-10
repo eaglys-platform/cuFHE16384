@@ -45,6 +45,7 @@ public:
 
   __host__ __device__ inline
   size_t SizeMalloc() const {
+    // this affects ksk index calculation in KeySwitch()
     return sizeof(T) * Align512(SizeData() / sizeof(T));
   }
 
@@ -376,6 +377,7 @@ public:
   KeySwitchingKey_T(): l_(0), w_(0), m_(0) {}
   __host__ __device__
   KeySwitchingKey_T(uint32_t n, uint32_t l, uint32_t w, uint32_t m)
+    // l: t, w:B_KS_BIT, m:2^w
       : LWESampleArray_T<T>(n, m * l << w), l_(l), w_(w), m_(m) {
     Assert(l * w <= 8 * sizeof(T));
     Assert(m >= 1);

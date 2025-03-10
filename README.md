@@ -1,76 +1,122 @@
-# cuFHE
-CUDA-accelerated Fully Homomorphic Encryption Library
+# cuFHE16384
+A modified version of [cuFHE](https://github.com/vernamlab/cuFHE) library that supports GBS for N = 16384.
 
-v1.0_beta -- release on Mar/14/2018
+# Installation
+This library is tested on NVIDIA Tesla T4 and A100 GPUs. 
 
-## What is cuFHE?
-The cuFHE library is an open-source library for Fully Homomorphic Encryption (FHE) on CUDA-enabled GPUs. It implements the TFHE scheme [CGGI16][CGGI17] proposed by Chillotti et al. in CUDA C++. Compared to the [TFHE lib](https://github.com/tfhe/tfhe) which reports the fastest gate-by-gate bootstrapping performance on CPUs, the cuFHE library yields roughly 20 times of speedup on an NVIDIA Titan Xp graphics card. The cuFHE library benefits greatly from an improved CUDA implementation of the number-theoretic transform (NTT) proposed in the [cuHE library](https://github.com/vernamlab/cuHE) [Dai15] by Dai and Sunar.
+## Build
 
-| [TFHE lib](https://github.com/tfhe/tfhe) | cuFHE | Speedup |
-|---|---|---|
-| 13 ms | **0.5 ms** | 26 times |
+1. Git clone
+2. Create and change into build directory: `mkdir build && cd build`
+3. Build by calling `cmake -DCMAKE_BUILD_TYPE=Release` \
+    (Optional) Set cuda architecture to your GPU's compute capability by passing CMAKE_CUDA_ARCHITECTURES flag: `cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECUTRES=70`
+4. Run generated Makefile by calling `make`
 
-### System Requirements
-**The library has been tested on Ubuntu Desktop 16.04 only.**
-This "Makefile" is created for Linux systems. Please create your own Makefile for MacOS and Windows. We are working on cross-platform support.
-
-GPU support requires NVIDIA Driver, NVIDIA CUDA Toolkit and a GPU with **Compute Capability no less than 6.0**.
-For devices with Compute Capability less than 6.0, there is [an issue](https://github.com/vernamlab/cuFHE/issues/2) that have not been solved yet. Any fix or suggestion is welcomed.
-
-### Installation (Linux)
-- Run `make` from the directory `cufhe/` for default compilation. This will
-  1. create directories `build` and `bin`,
-  2. generate shared libraries `libcufhe_cpu.so` (CPU standalone),
-  3. `libcufhe_gpu.so` (GPU support) in `bin` directory, and 3) create test and benchmarking executables `test_api_cpu` and `test_api_gpu` in `bin`.
-
-- Alternatively, run `make cpu` or `make gpu` for individual library and executable.
-- Copy the library files and `include` folder to any desirable location. Remember to export your library directory with `export LD_LIBRARY_PATH=directory`. Run `test_api_gpu` to see the latency per gate.
-- We provide a Python wrapper which uses boost-python tool. To use the Python interface, you will need
-  1. a python interpreter, (probably in `/usr/bin/`)
-  2. boost-python library, (Run `sudo apt-get install libboost-python-dev`, if you don't have it installed.)
-  3. to change the Makefile if your python and boost include/lib paths are different than default,
-  4. to run `make python_cpu` for CPU library and `make python_gpu` for GPU library, and finally
-  5. to test the python scripts under `cufhe/python/`.
-
-### User Manual
-Use files in `cufhe/test/` as examples. To summarize, follow the following function calling procedures.
-```c++
-SetSeed(); // init random generator seed
-PriKey pri_key;
-PubKey pub_key;
-KeyGen(pub_key, pri_key); // key generation
-// alternatively, write / read key files
-Ptxt pt[2];
-pt[0] = 0; // 0 or 1, single bit
-pt[1] = 1;
-Ctxt ct[2];
-Encrypt(ct[0], pt[0], pri_key);
-Encrypt(ct[1], pt[1], pri_key);
-
-Initialize(pub_key); // for GPU library
-Nand(ct[0], ct[0], ct[1], pub_key); // for CPU library
-Nand(ct[0], ct[0], ct[1]); // for GPU library non-parallelized gates
-cudaSteam_t stream_id;
-cudaStreamCreate(&stream_id);
-Nand(ct[0], ct[0], ct[1], stream_id); // for GPU library parallelized gates
-
-Decrypt(pt[0], ct[0], pri_key);
-CleanUp(); // for GPU library
+### TLDR:
+```bash
+git clone https://github.com/eaglys-platform/cuFHE16384.git
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release # -DCMAKE_CUDA_ARCHITECTURES=70
+make
 ```
 
-Currently implemented gates are `And, Or, Nand, Nor, Xor, Xnor, Not, Copy`.
+## Note on Scheme 2
+You can run Scheme 2 by compiling with `SCHEME=2`, although it is currently unstable and may result in errors.
 
-## Change Log
-- **version 1.0_beta** -- released on Mar/14/2018.
-  - Supports single-bit unpacked encryption / decryption / gates.
-  - C++ interface with CPU and GPU separate libraries.
+## Running GBS Test
+Execute the command below in the root directory of your cloned cufhe16384 repository.
+```bash
+./cufhe/bin/test_api_gpu
+```
 
-## Acknowledgement
-- We appreciate any bug reports or compiling issues.
-- Dai and Sunar’s work was in part provided by the US National Science Foundation CNS Award #1319130 and #1561536.
-- We gratefully acknowledge the support of NVIDIA Corporation with the donation of the Titan X Pascal GPU used for this research.
+## Parameters used in cuFHE16384
+<table border="1" style="border-collapse: collapse; width: 60%;">
+  <thead>
+    <tr>
+      <th>Variable Name</th>
+      <th>Values</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LARGE_N</td>
+      <td>16384</td>
+    </tr>
+    <tr>
+      <td>SMALL_N</td>
+      <td>800</td>
+    </tr>
+    <tr>
+      <td>SMALL_K</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>SMALL_L</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <td>B_G_BIT</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>SMALL_T</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>B_KS_BIT</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>LWE_NOISE</td>
+      <td>pow(2.0, -30)</td>
+    </tr>
+  </tbody>
+</table>
 
-## Reference
+
+# Benchmark
+### GBS execution time comparison 
+
+<table border="1" style="border-collapse: collapse; width: 60%;">
+  <!-- CPU-based Platform -->
+  <tr>
+    <th rowspan="2" style="text-align:left;">CPU-based Platform</th>
+    <th>Ryzen 9</th>
+    <th>Apple M1</th>
+  </tr>
+  <tr>
+    <td>3.97s</td>
+    <td>30.8s</td>
+  </tr>
+  
+  <!-- GPU-based Platform -->
+  <tr>
+    <th rowspan="3" style="text-align:left;">GPU-based Platform</th>
+    <th>Tesla T4</th>
+    <th>A100</th>
+  </tr>
+  <tr>
+    <td>617ms (Scheme 1)</td>
+    <td>731ms (Scheme 1)</td>
+  </tr>
+  <tr>
+    <td>754ms (Scheme 2)</td>
+    <td></td>
+  </tr>
+  
+  <!-- FPGA-based Platform -->
+  <tr>
+    <th style="text-align:left;">FPGA-based Platform</th>
+    <td>250ms</td>
+    <td></td>
+  </tr>
+</table>
+
+
+# Citation
+
+# References
 [CGGI16]: Chillotti, I., Gama, N., Georgieva, M., & Izabachene, M. (2016, December). Faster fully homomorphic encryption: Bootstrapping in less than 0.1 seconds. In International Conference on the Theory and Application of Cryptology and Information Security (pp. 3-33). Springer, Berlin, Heidelberg.
 
 [CGGI17]: Chillotti, I., Gama, N., Georgieva, M., & Izabachène, M. (2017, December). Faster Packed Homomorphic Operations and Efficient Circuit Bootstrapping for TFHE. In International Conference on the Theory and Application of Cryptology and Information Security (pp. 377-408). Springer, Cham.

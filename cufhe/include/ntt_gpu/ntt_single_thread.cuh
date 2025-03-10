@@ -37,6 +37,14 @@ void NTT2(FFP& r0, FFP& r1) {
   r1 = t;
 }
 
+//void NTT2(FFP& r0, FFP& r1, FFP& twd) {
+__device__ inline
+void NTTInv2(FFP& r0, FFP& r1, FFP& twd) {
+    register FFP t = r0 - twd*r1;
+    r0 += twd*r1;
+    r1 = t;
+}
+
 __device__ inline
 void NTT2(FFP* r) {
   NTT2(r[0], r[1]);
@@ -45,6 +53,14 @@ void NTT2(FFP* r) {
 __device__ inline
 void NTTInv2(FFP& r0, FFP& r1) {
   NTT2(r0, r1);
+}
+
+//void NTTInv2(FFP& r0, FFP& r1, FFP& twd) {
+__device__ inline
+void NTT2(FFP& r0, FFP& r1, FFP& twd) {
+    register FFP t = twd*(r0 - r1);
+    r0 += r1;
+    r1 = t;
 }
 
 __device__ inline
@@ -108,6 +124,24 @@ void NTT8(FFP* r) {
 }
 
 __device__ inline
+void NTT8(FFP* r, FFP* t) {
+  NTT2(r[0], r[4], t[0]);
+  NTT2(r[1], r[5], t[1]);
+  NTT2(r[2], r[6], t[2]);
+  NTT2(r[3], r[7], t[3]);
+
+  NTT2(r[0], r[2], t[0]);
+  NTT2(r[1], r[3], t[2]);
+  NTT2(r[4], r[6], t[0]);
+  NTT2(r[5], r[7], t[2]);
+
+  NTT2(r[0], r[1], t[0]);
+  NTT2(r[2], r[3], t[0]);
+  NTT2(r[4], r[5], t[0]);
+  NTT2(r[6], r[7], t[0]);
+}
+
+__device__ inline
 void NTTInv8(FFP* r) {
   NTTInv2(r[0], r[4]);
   NTTInv2(r[1], r[5]);
@@ -132,4 +166,21 @@ void NTTInv8(FFP* r) {
   r[3].Swap(r[6]);
 }
 
+__device__ inline
+void NTTInv8(FFP* r, FFP* t) {
+  NTTInv2(r[0], r[1], t[0]);
+  NTTInv2(r[2], r[3], t[0]);
+  NTTInv2(r[4], r[5], t[0]);
+  NTTInv2(r[6], r[7], t[0]);
+
+  NTTInv2(r[0], r[2], t[0]);
+  NTTInv2(r[1], r[3], t[2]);
+  NTTInv2(r[4], r[6], t[0]);
+  NTTInv2(r[5], r[7], t[2]);
+
+  NTTInv2(r[0], r[4], t[0]);
+  NTTInv2(r[1], r[5], t[1]);
+  NTTInv2(r[2], r[6], t[2]);
+  NTTInv2(r[3], r[7], t[3]);
+}
 } // namespace cufhe

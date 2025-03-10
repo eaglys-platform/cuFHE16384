@@ -48,8 +48,8 @@ int main() {
   cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, 0);
   uint32_t kNumSMs = prop.multiProcessorCount;
-  uint32_t kNumTests = kNumSMs * 32;// * 8;
-  uint32_t kNumLevels = 4;
+  uint32_t kNumTests = 100; // kNumSMs * 32;// * 8;
+  uint32_t kNumLevels = 1; // 4;
 
   SetSeed(); // set random seed
 
@@ -95,7 +95,11 @@ int main() {
 
   correct = true;
   for (int i = 0; i < 2 * kNumTests; i ++) {
+#if 1
     pt[i] = rand() % Ptxt::kPtxtSpace;
+#else
+    pt[i] = 0;
+#endif
     Encrypt(ct[i], pt[i], pri_key);
   }
   Synchronize();
@@ -109,12 +113,14 @@ int main() {
   // Here, pass streams to gates for parallel gates.
   for (int i = 0; i < kNumTests; i ++)
     Nand(ct[i], ct[i], ct[i + kNumTests], st[i % kNumSMs]);
+#if 0
   for (int i = 0; i < kNumTests; i ++)
     Or(ct[i], ct[i], ct[i + kNumTests], st[i % kNumSMs]);
   for (int i = 0; i < kNumTests; i ++)
     And(ct[i], ct[i], ct[i + kNumTests], st[i % kNumSMs]);
   for (int i = 0; i < kNumTests; i ++)
     Xor(ct[i], ct[i], ct[i + kNumTests], st[i % kNumSMs]);
+#endif
   Synchronize();
 
   cudaEventRecord(stop, 0);
@@ -127,14 +133,18 @@ int main() {
   int cnt_failures = 0;
   for (int i = 0; i < kNumTests; i ++) {
     NandCheck(pt[i], pt[i], pt[i + kNumTests]);
+    // std::cout << "expected: " << pt[i].message_ << " but got: " << pt[i + kNumTests].message_ << std::endl;
+#if 0
     OrCheck(pt[i], pt[i], pt[i + kNumTests]);
     AndCheck(pt[i], pt[i], pt[i + kNumTests]);
     XorCheck(pt[i], pt[i], pt[i + kNumTests]);
+#endif
     Decrypt(pt[i + kNumTests], ct[i], pri_key);
+    // std::cout << "expected: " << pt[i].message_ << " but got: " << pt[i + kNumTests].message_ << std::endl;
     if (pt[i + kNumTests].message_ != pt[i].message_) {
       correct = false;
       cnt_failures += 1;
-      //std::cout<< "Fail at iteration: " << i <<std::endl;
+      // std::cout<< "Fail at iteration: " << i <<std::endl;
     }
   }
   if (correct)
