@@ -1,8 +1,8 @@
 # cuFHE16384
-A modified version of [cuFHE](https://github.com/vernamlab/cuFHE) library that supports GBS for N = 16384.
+cuFHE16384 is a modified version of [cuFHE](https://github.com/vernamlab/cuFHE) library that supports GBS for N = 16384. This library was made to compare performance of CPU and GPU with our FPGA-based accelerator with computational accuracies of 10 and 14 bits.  
 
 # Installation
-This library is tested on NVIDIA Tesla T4 and A100 GPUs. 
+This library is tested on NVIDIA Tesla T4 and A100 GPUs.
 
 ## Build
 
@@ -12,7 +12,7 @@ This library is tested on NVIDIA Tesla T4 and A100 GPUs.
     (Optional) Set cuda architecture to your GPU's compute capability by passing CMAKE_CUDA_ARCHITECTURES flag: `cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECUTRES=70`
 4. Run generated Makefile by calling `make`
 
-### TLDR:
+### Commands:
 ```bash
 git clone https://github.com/eaglys-platform/cuFHE16384.git
 mkdir build
@@ -74,7 +74,6 @@ Execute the command below in the root directory of your cloned cufhe16384 reposi
   </tbody>
 </table>
 
-
 # Benchmark
 ### GBS execution time comparison 
 
@@ -113,10 +112,11 @@ Execute the command below in the root directory of your cloned cufhe16384 reposi
   </tr>
 </table>
 
-
 # Citation
 
 # References
+
+
 [CGGI16]: Chillotti, I., Gama, N., Georgieva, M., & Izabachene, M. (2016, December). Faster fully homomorphic encryption: Bootstrapping in less than 0.1 seconds. In International Conference on the Theory and Application of Cryptology and Information Security (pp. 3-33). Springer, Berlin, Heidelberg.
 
 [CGGI17]: Chillotti, I., Gama, N., Georgieva, M., & Izabachène, M. (2017, December). Faster Packed Homomorphic Operations and Efficient Circuit Bootstrapping for TFHE. In International Conference on the Theory and Application of Cryptology and Information Security (pp. 377-408). Springer, Cham.
